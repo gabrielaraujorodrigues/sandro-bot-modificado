@@ -344,25 +344,57 @@ async function _processarMsg(conn, msg) {
     } catch(e) {}
   }
 
-  // ── ABRIR GRUPO ──
+  // ── ABRIR GRUPO (imediato ou agendado) ──
   if (['abrir', 'abrirgrupo', 'opengroup', 'abrirg', 'open'].includes(cmd)) {
     if (!isGroup) { await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' }); return; }
     if (!isAdmin) { await conn.sendMessage(from, { text: '❌ Apenas *administradores* podem usar este comando!' }); return; }
-    try {
-      await conn.groupSettingUpdate(from, 'not_announcement');
-      await conn.sendMessage(from, { text: '🩷 *Gleyce Bot:* Grupo *aberto!* ✅\n\nTodos os membros já podem enviar mensagens normalmente.' });
-    } catch(e) { await conn.sendMessage(from, { text: '❌ Erro ao abrir grupo: ' + e.message }); }
+    const horarioAbrir = args[0] || '';
+    if (horarioAbrir) {
+      // Agendar abertura para horário/tempo informado
+      try {
+        rgGroupOCfunc(from); // garante que o grupo existe no registro
+        addOpenCloseGP(from, horarioAbrir, sender, 'open');
+        const horaAgendada = horarioAbrir.includes(':') ? horarioAbrir : `em ${horarioAbrir}`;
+        await conn.sendMessage(from, {
+          text: `🩷 *Gleyce Bot:* Abertura do grupo *agendada* para ${horaAgendada}! ⏰\n\nO bot abrirá o grupo automaticamente no horário marcado, sem precisar de nenhum admin.`
+        });
+      } catch(e) {
+        await conn.sendMessage(from, { text: `❌ Erro ao agendar: ${e.message}\n\nFormatos aceitos:\n• *!abrir 22:00* — às 22h\n• *!abrir 2h* — em 2 horas\n• *!abrir 30m* — em 30 minutos` });
+      }
+    } else {
+      // Abrir imediatamente
+      try {
+        await conn.groupSettingUpdate(from, 'not_announcement');
+        await conn.sendMessage(from, { text: '🩷 *Gleyce Bot:* Grupo *aberto agora!* ✅\n\nTodos os membros já podem enviar mensagens normalmente.' });
+      } catch(e) { await conn.sendMessage(from, { text: '❌ Erro ao abrir grupo: ' + e.message }); }
+    }
     return;
   }
 
-  // ── FECHAR GRUPO ──
+  // ── FECHAR GRUPO (imediato ou agendado) ──
   if (['fechar', 'fechargrupo', 'closegroup', 'fecharg', 'close'].includes(cmd)) {
     if (!isGroup) { await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' }); return; }
     if (!isAdmin) { await conn.sendMessage(from, { text: '❌ Apenas *administradores* podem usar este comando!' }); return; }
-    try {
-      await conn.groupSettingUpdate(from, 'announcement');
-      await conn.sendMessage(from, { text: '🔒 *Gleyce Bot:* Grupo *fechado!* ❌\n\nSomente administradores podem enviar mensagens.' });
-    } catch(e) { await conn.sendMessage(from, { text: '❌ Erro ao fechar grupo: ' + e.message }); }
+    const horarioFechar = args[0] || '';
+    if (horarioFechar) {
+      // Agendar fechamento para horário/tempo informado
+      try {
+        rgGroupOCfunc(from); // garante que o grupo existe no registro
+        addOpenCloseGP(from, horarioFechar, sender, 'close');
+        const horaAgendada = horarioFechar.includes(':') ? horarioFechar : `em ${horarioFechar}`;
+        await conn.sendMessage(from, {
+          text: `🔒 *Gleyce Bot:* Fechamento do grupo *agendado* para ${horaAgendada}! ⏰\n\nO bot fechará o grupo automaticamente no horário marcado, sem precisar de nenhum admin.`
+        });
+      } catch(e) {
+        await conn.sendMessage(from, { text: `❌ Erro ao agendar: ${e.message}\n\nFormatos aceitos:\n• *!fechar 22:00* — às 22h\n• *!fechar 2h* — em 2 horas\n• *!fechar 30m* — em 30 minutos` });
+      }
+    } else {
+      // Fechar imediatamente
+      try {
+        await conn.groupSettingUpdate(from, 'announcement');
+        await conn.sendMessage(from, { text: '🔒 *Gleyce Bot:* Grupo *fechado agora!* ❌\n\nSomente administradores podem enviar mensagens.' });
+      } catch(e) { await conn.sendMessage(from, { text: '❌ Erro ao fechar grupo: ' + e.message }); }
+    }
     return;
   }
 
