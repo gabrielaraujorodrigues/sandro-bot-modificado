@@ -1,0 +1,10 @@
+node_modules/
+*.log
+.env
+session/
+auth_info_baileys/
+auth_info/
+baileys_store.json
+baileys_store_multi.json
+*.key
+*.pem

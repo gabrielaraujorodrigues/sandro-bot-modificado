@@ -1,0 +1,78 @@
+[
+  {
+    "name": "Veo.3.1 Assinantes",
+    "groupId": "120363426196306046@g.us",
+    "x9": false,
+    "antiimg": false,
+    "antivideo": false,
+    "antiaudio": false,
+    "antisticker": false,
+    "antidoc": false,
+    "antictt": false,
+    "antiloc": false,
+    "antilinkgp": false,
+    "antilinkhard": false,
+    "antifake": false,
+    "antiporno": false,
+    "Odelete": false,
+    "antispam": false,
+    "antinotas": false,
+    "anticatalogo": false,
+    "visuUnica": false,
+    "registrarFIGUS": false,
+    "soadm": false,
+    "listanegra": [],
+    "advertir": [],
+    "prefixos": [
+      "/"
+    ],
+    "advertir2": [],
+    "legenda_estrangeiro": "0",
+    "legenda_documento": "0",
+    "legenda_video": "0",
+    "legenda_imagem": "0",
+    "multiprefix": false,
+    "forca_ofc": [
+      {
+        "acertos": 0,
+        "erros": 0,
+        "palavra": [],
+        "escreveu": [],
+        "palavra_ofc": 0,
+        "dica": 0,
+        "tema": 0
+      }
+    ],
+    "ausentes": [],
+    "forca_inc": false,
+    "antipalavrao": {
+      "active": false,
+      "palavras": []
+    },
+    "limitec": {
+      "active": false,
+      "quantidade": null
+    },
+    "wellcome": [
+      {
+        "bemvindo1": false,
+        "legendabv": "Olá #numerodele#, seja bem vindo (a) ao grupo: #nomedogp#",
+        "legendasaiu": 0
+      },
+      {
+        "bemvindo2": true,
+        "legendabv": "#numerodele# Seja bem-vindo ao *Grupo Exclusivo para Assinantes – VEO 3.1 + Gemini Ultra 🎬✨*\n\nEste espaço foi criado *exclusivamente para assinantes,* com o objetivo de manter um ambiente colaborativo, produtivo e focado em resultados.\n\nAqui você pode:\n\n✅ Trocar ideias com outros criadores\n✅ Pedir e oferecer sugestões sobre vídeos e imagens criados\n✅ Compartilhar dicas práticas de uso das ferramentas\n✅ Mostrar seus resultados, testes e aprendizados\n\nO foco do grupo é 100% criação de vídeos e imagens utilizando as ferramentas disponibilizadas.\n\n*📌 REGRAS DO GRUPO (LEITURA OBRIGATÓRIA)*\n\n❌ Não é permitido qualquer tipo de desrespeito aos membros\n❌ Não chame membros no privado (PV) sem autorização\n❌ Evite palavrões\n❌ Proibido realizar vendas de qualquer natureza\n❌ Proibido conteúdos +18, pornografia, jogos de azar, cassino ou similares\n\n*⚠️ INFORMAÇÕES IMPORTANTES*\n\n🔹 Em caso de dúvidas, fale *somente com um dos ADMS*\n🔹 O grupo não se responsabiliza por contatos, promessas ou negociações feitas entre membros\n🔹 O descumprimento das regras resultará em *remoção imediata, sem aviso prévio*\n\nContamos com sua colaboração para manter este ambiente *organizado, profissional e produtivo* para todos. 💡🚀",
+        "legendasaiu": 0
+      }
+    ],
+    "simi1": false,
+    "simi2": false,
+    "autosticker": false,
+    "autoresposta": false,
+    "jogos": false,
+    "level": false,
+    "bangp": false,
+    "nsfw": false,
+    "aluguel": true
+  }
+]
