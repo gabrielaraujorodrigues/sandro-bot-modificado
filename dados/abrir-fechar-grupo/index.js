@@ -281,13 +281,38 @@ async function _baixarMidia(conn, msg) {
   return null;
 }
 
+// ── Mapa de comandos customizados recentes (suprimir erro do sandro.js) ──
+const _recentCustomCmds = {};
+
 // ── Processador principal de mensagens ──
 async function _processarMsg(conn, msg) {
-  if (!msg?.message || msg.key.fromMe) return;
+  if (!msg?.message) return;
 
   const from = msg.key.remoteJid;
+
+  // ══ SUPRIMIR "comando não encontrado" do sandro.js ══
+  // Quando o bot manda a mensagem de erro logo após um cmd customizado, deletamos
+  if (msg.key.fromMe) {
+    try {
+      const txt = msg.message?.conversation
+                || msg.message?.extendedTextMessage?.text
+                || msg.message?.imageMessage?.caption
+                || msg.message?.videoMessage?.caption
+                || '';
+      const ehErro = txt.includes('não foi encontrado')
+                  || txt.includes('nao foi encontrado')
+                  || (txt.includes('Utilize') && txt.includes('menu'));
+      const recente = _recentCustomCmds[from];
+      if (ehErro && recente && (Date.now() - recente) < 6000) {
+        await conn.sendMessage(from, { delete: msg.key }).catch(() => {});
+        delete _recentCustomCmds[from];
+      }
+    } catch(e) {}
+    return;
+  }
+
   const isGroup = from?.endsWith('@g.us');
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const sender  = msg.key.participant || msg.key.remoteJid;
   const msgContent = msg.message;
 
   // ══ ANTI-NUDEZ: Visualização Única ══
@@ -303,9 +328,8 @@ async function _processarMsg(conn, msg) {
           text: `⚠️ *[PROTEÇÃO GLEYCE BOT]* Foto/vídeo de visualização única com conteúdo +18 enviado por @${sender.split('@')[0]} foi *removido automaticamente*.`,
           mentions: [sender]
         });
-        console.log('[ANTI-NUDEZ] View-once removido de', sender);
       }
-    } catch(e) { console.error('[ANTI-NUDEZ VO] Erro:', e.message); }
+    } catch(e) {}
     return;
   }
 
@@ -319,83 +343,124 @@ async function _processarMsg(conn, msg) {
           text: `⚠️ *[PROTEÇÃO GLEYCE BOT]* Figurinha com conteúdo +18 enviada por @${sender.split('@')[0]} foi *removida automaticamente*.`,
           mentions: [sender]
         });
-        console.log('[ANTI-NUDEZ] Sticker removido de', sender);
       }
-    } catch(e) { console.error('[ANTI-NUDEZ STK] Erro:', e.message); }
+    } catch(e) {}
     return;
   }
 
   // ══ COMANDOS VIA TEXTO ══
-  const texto = _getTexto(msg);
+  const texto  = _getTexto(msg);
   const prefix = _getPrefix(texto);
   if (!prefix) return;
 
   const partes = texto.slice(prefix.length).trim().split(/\s+/);
-  const cmd = (partes[0] || '').toLowerCase();
-  const args = partes.slice(1);
+  const cmd    = (partes[0] || '').toLowerCase();
+  const args   = partes.slice(1);
 
   // Verificar admin no grupo
   let isAdmin = false;
   if (isGroup) {
     try {
-      const meta = await conn.groupMetadata(from);
+      const meta   = await conn.groupMetadata(from);
       const admins = meta.participants.filter(p => p.admin).map(p => p.id);
       isAdmin = admins.includes(sender);
     } catch(e) {}
   }
 
   // ── ABRIR GRUPO (imediato ou agendado) ──
-  if (['abrir', 'abrirgrupo', 'opengroup', 'abrirg', 'open'].includes(cmd)) {
+  if (['abrir', 'abrirgrupo', 'opengroup', 'abrirg'].includes(cmd)) {
     _recentCustomCmds[from] = Date.now();
-    if (!isGroup) { await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' }); return; }
-    if (!isAdmin) { await conn.sendMessage(from, { text: '❌ Apenas *administradores* podem usar este comando!' }); return; }
-    const horarioAbrir = args[0] || '';
-    if (horarioAbrir) {
-      // Agendar abertura para horário/tempo informado
+    if (!isGroup) {
+      await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' });
+      return;
+    }
+    if (!isAdmin) {
+      await conn.sendMessage(from, { text: '❌ Apenas *administradores* podem usar este comando!' });
+      return;
+    }
+    const horario = args[0] || '';
+    if (horario) {
       try {
-        rgGroupOCfunc(from); // garante que o grupo existe no registro
-        addOpenCloseGP(from, horarioAbrir, sender, 'open');
-        const horaAgendada = horarioAbrir.includes(':') ? horarioAbrir : `em ${horarioAbrir}`;
+        rgGroupOCfunc(from);
+        addOpenCloseGP(from, horario, sender, 'open');
+        const horaTexto = horario.includes(':') ? horario : `em ${horario}`;
         await conn.sendMessage(from, {
-          text: `🩷 *Gleyce Bot:* Abertura do grupo *agendada* para ${horaAgendada}! ⏰\n\nO bot abrirá o grupo automaticamente no horário marcado, sem precisar de nenhum admin.`
+          text: `🩷 *Gleyce Bot — Agendamento:*
+
+✅ Grupo será *ABERTO* ${horaTexto}!
+
+O bot abrirá automaticamente, sem precisar de admin online.`
         });
       } catch(e) {
-        await conn.sendMessage(from, { text: `❌ Erro ao agendar: ${e.message}\n\nFormatos aceitos:\n• *!abrir 22:00* — às 22h\n• *!abrir 2h* — em 2 horas\n• *!abrir 30m* — em 30 minutos` });
+        await conn.sendMessage(from, {
+          text: `❌ Erro: ${e.message}
+
+*Formatos aceitos:*
+• ${prefix}abrir 22:00 — às 22h
+• ${prefix}abrir 2h — em 2 horas
+• ${prefix}abrir 30m — em 30 minutos`
+        });
       }
     } else {
-      // Abrir imediatamente
       try {
         await conn.groupSettingUpdate(from, 'not_announcement');
-        await conn.sendMessage(from, { text: '🩷 *Gleyce Bot:* Grupo *aberto agora!* ✅\n\nTodos os membros já podem enviar mensagens normalmente.' });
-      } catch(e) { await conn.sendMessage(from, { text: '❌ Erro ao abrir grupo: ' + e.message }); }
+        await conn.sendMessage(from, {
+          text: '🩷 *Gleyce Bot:*
+
+✅ Grupo *ABERTO!* Todos os membros já podem enviar mensagens.'
+        });
+      } catch(e) {
+        await conn.sendMessage(from, { text: '❌ Erro ao abrir grupo: ' + e.message });
+      }
     }
     return;
   }
 
   // ── FECHAR GRUPO (imediato ou agendado) ──
-  if (['fechar', 'fechargrupo', 'closegroup', 'fecharg', 'close'].includes(cmd)) {
+  if (['fechar', 'fechargrupo', 'closegroup', 'fecharg'].includes(cmd)) {
     _recentCustomCmds[from] = Date.now();
-    if (!isGroup) { await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' }); return; }
-    if (!isAdmin) { await conn.sendMessage(from, { text: '❌ Apenas *administradores* podem usar este comando!' }); return; }
-    const horarioFechar = args[0] || '';
-    if (horarioFechar) {
-      // Agendar fechamento para horário/tempo informado
+    if (!isGroup) {
+      await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' });
+      return;
+    }
+    if (!isAdmin) {
+      await conn.sendMessage(from, { text: '❌ Apenas *administradores* podem usar este comando!' });
+      return;
+    }
+    const horario = args[0] || '';
+    if (horario) {
       try {
-        rgGroupOCfunc(from); // garante que o grupo existe no registro
-        addOpenCloseGP(from, horarioFechar, sender, 'close');
-        const horaAgendada = horarioFechar.includes(':') ? horarioFechar : `em ${horarioFechar}`;
+        rgGroupOCfunc(from);
+        addOpenCloseGP(from, horario, sender, 'close');
+        const horaTexto = horario.includes(':') ? horario : `em ${horario}`;
         await conn.sendMessage(from, {
-          text: `🔒 *Gleyce Bot:* Fechamento do grupo *agendado* para ${horaAgendada}! ⏰\n\nO bot fechará o grupo automaticamente no horário marcado, sem precisar de nenhum admin.`
+          text: `🔒 *Gleyce Bot — Agendamento:*
+
+✅ Grupo será *FECHADO* ${horaTexto}!
+
+O bot fechará automaticamente, sem precisar de admin online.`
         });
       } catch(e) {
-        await conn.sendMessage(from, { text: `❌ Erro ao agendar: ${e.message}\n\nFormatos aceitos:\n• *!fechar 22:00* — às 22h\n• *!fechar 2h* — em 2 horas\n• *!fechar 30m* — em 30 minutos` });
+        await conn.sendMessage(from, {
+          text: `❌ Erro: ${e.message}
+
+*Formatos aceitos:*
+• ${prefix}fechar 22:00 — às 22h
+• ${prefix}fechar 2h — em 2 horas
+• ${prefix}fechar 30m — em 30 minutos`
+        });
       }
     } else {
-      // Fechar imediatamente
       try {
         await conn.groupSettingUpdate(from, 'announcement');
-        await conn.sendMessage(from, { text: '🔒 *Gleyce Bot:* Grupo *fechado agora!* ❌\n\nSomente administradores podem enviar mensagens.' });
-      } catch(e) { await conn.sendMessage(from, { text: '❌ Erro ao fechar grupo: ' + e.message }); }
+        await conn.sendMessage(from, {
+          text: '🔒 *Gleyce Bot:*
+
+✅ Grupo *FECHADO!* Só administradores podem enviar mensagens.'
+        });
+      } catch(e) {
+        await conn.sendMessage(from, { text: '❌ Erro ao fechar grupo: ' + e.message });
+      }
     }
     return;
   }
@@ -405,52 +470,59 @@ async function _processarMsg(conn, msg) {
     _recentCustomCmds[from] = Date.now();
     const pergunta = args.join(' ').trim();
     if (!pergunta) {
-      await conn.sendMessage(from, { text: `🧚‍♀️ *Agente IA — Gleyce Bot*\n\nUse: ${prefix}agente <sua pergunta>\n\nExemplo: ${prefix}agente O que é inteligência artificial?` });
+      await conn.sendMessage(from, {
+        text: `🧚‍♀️ *Agente IA — Gleyce Bot*
+
+Use: ${prefix}agente <sua pergunta>
+
+Exemplo:
+${prefix}agente O que é inteligência artificial?`
+      });
       return;
     }
-    await conn.sendMessage(from, { text: '🧚‍♀️ *Agente IA consultando...*' });
+    await conn.sendMessage(from, { text: '🧚‍♀️ *Agente IA consultando... aguarde!*' });
     try {
       const resp = await _chamarAgente(pergunta);
-      await conn.sendMessage(from, { text: `🧚‍♀️ *Agente IA — Gleyce Bot*\n\n${resp}` });
-    } catch(e) { await conn.sendMessage(from, { text: '❌ ' + e.message }); }
+      await conn.sendMessage(from, {
+        text: `🧚‍♀️ *Agente IA — Gleyce Bot*
+
+${resp}`
+      });
+    } catch(e) {
+      await conn.sendMessage(from, { text: '❌ IA indisponível no momento: ' + e.message });
+    }
     return;
   }
 }
 
-// ── Inicializador do interceptor ──
-let _interceptorOk = false;
-
-function initInterceptorComandos() {
-  let tentativas = 0;
-
-  const tentar = () => {
-    const conn = global.conn;
-    if (!conn || !conn.ev || _interceptorOk) return;
-    _interceptorOk = true;
-
+// ── Auto-iniciar interceptor ao carregar o módulo ──
+// sandro.js faz require() deste arquivo mas não chama initInterceptorComandos()
+// Por isso iniciamos sozinhos, com polling até global.conn estar pronto
+;(function _autoInit() {
+  function _registrar(conn) {
+    if (global._gleyceInterceptorOk) return;
+    global._gleyceInterceptorOk = true;
     conn.ev.on('messages.upsert', async ({ messages, type }) => {
       if (type !== 'notify') return;
       for (const msg of messages) {
-        _processarMsg(conn, msg).catch(e => console.error('[INTERCEPTOR] Erro:', e.message));
+        _processarMsg(conn, msg).catch(() => {});
       }
     });
+    console.log('[GLEYCE BOT] ✅ Interceptor ativo! Comandos /abrir /fechar /agente prontos.');
+  }
 
-    console.log('[GLEYCE BOT] Interceptor de comandos extras ativo ✅');
-  };
+  // Tentativa imediata após 3s
+  setTimeout(() => { if (global.conn?.ev) _registrar(global.conn); }, 3000);
 
-  // Tentar a cada 5s até conseguir
-  const iv = setInterval(() => {
-    tentativas++;
-    tentar();
-    if (_interceptorOk || tentativas > 120) clearInterval(iv);
+  // Polling a cada 5s por até 20 min
+  let _n = 0;
+  const _iv = setInterval(() => {
+    _n++;
+    if (global.conn?.ev) { _registrar(global.conn); clearInterval(_iv); }
+    if (_n > 240) clearInterval(_iv);
   }, 5000);
+})();
 
-  setTimeout(tentar, 3000);
-}
-
-// ── Auto-iniciar interceptor quando o módulo é carregado pelo bot ──
-// O sandro.js chama require() neste arquivo mas não chama initInterceptorComandos()
-// Por isso iniciamos automaticamente, com polling até global.conn estar disponível
 ;(function _autoInit() {
   let _tentativas = 0;
   const _iv = setInterval(() => {
