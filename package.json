@@ -1,7 +1,7 @@
 {
   "name": "Gleyce-Bot-Oficial",
   "version": "4.7.0",
-  "description": "Bot de WhatsApp sandro",
+  "description": "Bot de WhatsApp Gleyce Bot Oficial",
   "main": "connect.js",
   "scripts": {
     "start": "node connect.js"

@@ -62,7 +62,7 @@ return`╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}pikachu (Gleyce Bot Oficial)
 │🧚‍♀️⃤${prefix}supreme (Gleyce Bot Oficial)
 │🩷⃤${prefix}nokia
-│🧚‍♀️⃤${prefix}fatos (SANDRO)
+│🧚‍♀️⃤${prefix}fatos (GLEYCE)
 │🩷⃤${prefix}drake (Gleyce Bot Oficial)
 │🧚‍♀️⃤${prefix}advertencia (Atenção)
 │🩷⃤${prefix}alerta (Cuidado)
@@ -99,8 +99,8 @@ return`╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🧚‍♀️⃤${prefix}gethtml (link site)
 │🩷⃤${prefix}comprarbot
 │🧚‍♀️⃤${prefix}ping (velocidade)
-│🩷⃤${prefix}gerarnick (SANDRO)
-│🧚‍♀️⃤${prefix}gerarnick2 (SANDRO)
+│🩷⃤${prefix}gerarnick (GLEYCE)
+│🧚‍♀️⃤${prefix}gerarnick2 (GLEYCE)
 │🩷⃤${prefix}ping2 (velocidade)
 │🧚‍♀️⃤${prefix}metadinha
 │🩷⃤${prefix}convite (link do grupo)
@@ -238,13 +238,13 @@ return`╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}pixelate (marca uma imagem) 
 │🧚‍♀️⃤${prefix}lgbt (marca uma imagem) 
 │🩷⃤${prefix}placaloli (Gleyce-Bot-Oficial)
-│🧚‍♀️⃤${prefix}captain (SANDRO/MD) 
-│🩷⃤${prefix}phlogo (SANDRO/MD) 
-│🧚‍♀️⃤${prefix}graffitiwall (SANDRO/MD) 
-│🩷⃤${prefix}deadpool (SANDRO/MD) 
-│🧚‍♀️⃤${prefix}blackpink (SANDRO/MD) 
-│🩷⃤${prefix}vintage3d (SANDRO/MD) 
-│🧚‍♀️⃤${prefix}glitter (SANDRO/MD)
+│🧚‍♀️⃤${prefix}captain (GLEYCE BOT) 
+│🩷⃤${prefix}phlogo (GLEYCE BOT) 
+│🧚‍♀️⃤${prefix}graffitiwall (GLEYCE BOT) 
+│🩷⃤${prefix}deadpool (GLEYCE BOT) 
+│🧚‍♀️⃤${prefix}blackpink (GLEYCE BOT) 
+│🩷⃤${prefix}vintage3d (GLEYCE BOT) 
+│🧚‍♀️⃤${prefix}glitter (GLEYCE BOT)
 ╰━━━━━─「愛」─━━━━━
 ╭━━━⪩ *FIGURINHAS* ⪨━━━
 │🩷⃤${prefix}gura
@@ -264,7 +264,7 @@ return`╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}Sticker (Marcar-foto)
 │🧚‍♀️⃤${prefix}Toimg (Marcar-sticker)
 │🩷⃤${prefix}Togif (Marcar-sticker)
-│🧚‍♀️⃤${prefix}amongsticker (SANDRO)
+│🧚‍♀️⃤${prefix}amongsticker (GLEYCE)
 │🩷⃤${prefix}figaleatoria (5)
 │🧚‍♀️⃤${prefix}figuemoji (5)
 │🩷⃤${prefix}figuflork (5)
@@ -283,7 +283,7 @@ return`╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🧚‍♀️⃤${prefix}operadora (5531xxxx)
 │🩷⃤${prefix}xvsearch (morena)
 │🧚‍♀️⃤${prefix}dorama (link)
-│🩷⃤${prefix}pesquisaytb (SANDRO bot)
+│🩷⃤${prefix}pesquisaytb (GLEYCE BOT)
 │🧚‍♀️⃤${prefix}anime (Kimetsu no Yaiba)
 │🩷⃤${prefix}googlesearch (Moana)
 │🧚‍♀️⃤${prefix}noticias (Bolsonaro)
@@ -382,8 +382,8 @@ return`╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}gethtml (link site)
 │🩷⃤${prefix}comprarbot
 │🩷⃤${prefix}ping
-│🩷⃤${prefix}gerarnick (SANDRO)
-│🩷⃤${prefix}gerarnick2 (SANDRO)
+│🩷⃤${prefix}gerarnick (GLEYCE)
+│🩷⃤${prefix}gerarnick2 (GLEYCE)
 │🩷⃤${prefix}ping2
 │🩷⃤${prefix}metadinha
 │🩷⃤${prefix}convite (link do grupo)
@@ -426,7 +426,7 @@ return`╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}Sticker (Marcar-foto)
 │🩷⃤${prefix}Toimg (Marcar-sticker)
 │🩷⃤${prefix}Togif (Marcar-sticker)
-│🩷⃤${prefix}amongsticker (SANDRO)
+│🩷⃤${prefix}amongsticker (GLEYCE)
 │🩷⃤${prefix}figaleatoria (5)
 │🩷⃤${prefix}figuraiva (5)
 │🩷⃤${prefix}figuroblox (5)
@@ -438,7 +438,7 @@ return`╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}figuflork (5)
 ╰━━━━━─「愛」─━━━━━
 ╭━━━⪩ *PESQUISAR* ⪨━━━
-│🩷⃤${prefix}pesquisaytb (SANDRO bot)
+│🩷⃤${prefix}pesquisaytb (GLEYCE BOT)
 │🩷⃤${prefix}anime (Kimetsu no Yaiba)
 │🩷⃤${prefix}googlesearch (Moana)
 │🩷⃤${prefix}noticias (Bolsonaro)
@@ -547,6 +547,10 @@ return `​╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}Marcar (marca tds do gp)
 │🩷⃤${prefix}Marcar2 (Marca-tds-wa.me)
 │🩷⃤${prefix}Antipalavra (1/0)
+│🩷⃤${prefix}anti nudez (1/0)
+│🩷⃤${prefix}abrir (HH:MM ou 2h/30m)
+│🩷⃤${prefix}fechar (HH:MM ou 2h/30m)
+│🩷⃤${prefix}agente ia (Mensagem)
 ╰═══════════════════ ⪨`;
 };
 
@@ -1150,7 +1154,7 @@ return `​╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}Sticker (Marcar-foto)
 │🩷⃤${prefix}Toimg (Marcar-sticker)
 │🩷⃤${prefix}Togif (Marcar-sticker)
-│🩷⃤${prefix}amongsticker (SANDRO)
+│🩷⃤${prefix}amongsticker (GLEYCE)
 │🩷⃤${prefix}figaleatoria (5)
 │🩷⃤${prefix}figuemoji (5)
 │🩷⃤${prefix}figuflork (5)
@@ -1179,7 +1183,7 @@ return `​╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}operadora (5531xxxx)
 │🩷⃤${prefix}xvsearch (morena)
 │🩷⃤${prefix}dorama (link)
-│🩷⃤${prefix}pesquisaytb (SANDRO bot)
+│🩷⃤${prefix}pesquisaytb (GLEYCE BOT)
 │🩷⃤${prefix}anime (Kimetsu no Yaiba)
 │🩷⃤${prefix}googlesearch (Moana)
 │🩷⃤${prefix}noticias (Bolsonaro)
@@ -1269,18 +1273,18 @@ return `╔♡∞*♡♡∞:｡.｡🩷｡.｡:∞♡*♡:∞♡╗
 │🩷⃤${prefix}alifox 
 ╰━━━━━─「愛」─━━━━━
 ╭━━━⪩ *PLAQUINHAS* ⪨━━━
-│🩷⃤${prefix}Plaq (SANDRO)
-│🩷⃤${prefix}Plaq1 (SANDRO)
-│🩷⃤${prefix}Plaq2 (SANDRO)
-│🩷⃤${prefix}Plaq3 (SANDRO)
-│🩷⃤${prefix}Plaq4 (SANDRO)
-│🩷⃤${prefix}Plaq5 (SANDRO)
-│🩷⃤${prefix}Plaq6 (SANDRO)
-│🩷⃤${prefix}Plaq7 (SANDRO)
-│🩷⃤${prefix}Plaq8 (SANDRO)
-│🩷⃤${prefix}Plaq9 (SANDRO)
-│🩷⃤${prefix}plaq9 (SANDRO)
-│🩷⃤${prefix}plaq10 (SANDRO)
+│🩷⃤${prefix}Plaq (GLEYCE)
+│🩷⃤${prefix}Plaq1 (GLEYCE)
+│🩷⃤${prefix}Plaq2 (GLEYCE)
+│🩷⃤${prefix}Plaq3 (GLEYCE)
+│🩷⃤${prefix}Plaq4 (GLEYCE)
+│🩷⃤${prefix}Plaq5 (GLEYCE)
+│🩷⃤${prefix}Plaq6 (GLEYCE)
+│🩷⃤${prefix}Plaq7 (GLEYCE)
+│🩷⃤${prefix}Plaq8 (GLEYCE)
+│🩷⃤${prefix}Plaq9 (GLEYCE)
+│🩷⃤${prefix}plaq9 (GLEYCE)
+│🩷⃤${prefix}plaq10 (GLEYCE)
 ╰━━━━━─「愛」─━━━━━
 ╭━━━⪩ *VIDEO +18* ⪨━━━
 │🩷⃤${prefix}amador
