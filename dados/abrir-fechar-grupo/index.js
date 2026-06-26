@@ -346,6 +346,7 @@ async function _processarMsg(conn, msg) {
 
   // ── ABRIR GRUPO (imediato ou agendado) ──
   if (['abrir', 'abrirgrupo', 'opengroup', 'abrirg', 'open'].includes(cmd)) {
+    _recentCustomCmds[from] = Date.now();
     if (!isGroup) { await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' }); return; }
     if (!isAdmin) { await conn.sendMessage(from, { text: '❌ Apenas *administradores* podem usar este comando!' }); return; }
     const horarioAbrir = args[0] || '';
@@ -373,6 +374,7 @@ async function _processarMsg(conn, msg) {
 
   // ── FECHAR GRUPO (imediato ou agendado) ──
   if (['fechar', 'fechargrupo', 'closegroup', 'fecharg', 'close'].includes(cmd)) {
+    _recentCustomCmds[from] = Date.now();
     if (!isGroup) { await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' }); return; }
     if (!isAdmin) { await conn.sendMessage(from, { text: '❌ Apenas *administradores* podem usar este comando!' }); return; }
     const horarioFechar = args[0] || '';
@@ -400,6 +402,7 @@ async function _processarMsg(conn, msg) {
 
   // ── AGENTE IA ──
   if (['agente', 'ia', 'gpt', 'ask', 'perguntar'].includes(cmd)) {
+    _recentCustomCmds[from] = Date.now();
     const pergunta = args.join(' ').trim();
     if (!pergunta) {
       await conn.sendMessage(from, { text: `🧚‍♀️ *Agente IA — Gleyce Bot*\n\nUse: ${prefix}agente <sua pergunta>\n\nExemplo: ${prefix}agente O que é inteligência artificial?` });
