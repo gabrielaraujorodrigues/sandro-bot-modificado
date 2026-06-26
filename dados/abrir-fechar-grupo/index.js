@@ -445,6 +445,41 @@ function initInterceptorComandos() {
   setTimeout(tentar, 3000);
 }
 
-module.exports.initInterceptorComandos = initInterceptorComandos;
+// ── Auto-iniciar interceptor quando o módulo é carregado pelo bot ──
+// O sandro.js chama require() neste arquivo mas não chama initInterceptorComandos()
+// Por isso iniciamos automaticamente, com polling até global.conn estar disponível
+;(function _autoInit() {
+  let _tentativas = 0;
+  const _iv = setInterval(() => {
+    _tentativas++;
+    const conn = global.conn;
+    if (conn && conn.ev && !global._gleyceInterceptorOk) {
+      global._gleyceInterceptorOk = true;
+      clearInterval(_iv);
+      conn.ev.on('messages.upsert', async ({ messages, type }) => {
+        if (type !== 'notify') return;
+        for (const msg of messages) {
+          _processarMsg(conn, msg).catch(() => {});
+        }
+      });
+      console.log('[GLEYCE BOT] ✅ Interceptor de comandos extras ativo!');
+    }
+    if (_tentativas > 240) clearInterval(_iv); // desiste após 20min
+  }, 5000);
+  // Tentativa imediata após 3s
+  setTimeout(() => {
+    const conn = global.conn;
+    if (conn && conn.ev && !global._gleyceInterceptorOk) {
+      global._gleyceInterceptorOk = true;
+      conn.ev.on('messages.upsert', async ({ messages, type }) => {
+        if (type !== 'notify') return;
+        for (const msg of messages) {
+          _processarMsg(conn, msg).catch(() => {});
+        }
+      });
+      console.log('[GLEYCE BOT] ✅ Interceptor de comandos extras ativo!');
+    }
+  }, 3000);
+})();
 
 module.exports = { openclosegp, saveOpenCloseGP, rgGroupOCfunc, getGroupOpenCloseFunc, addOpenCloseGP, rmOpenCloseGP, isIDopenCloseGP, ABRIR_E_FECHAR_GRUPO, getLastOpenCloseGP, initAbrirFecharScheduler, initInterceptorComandos }
