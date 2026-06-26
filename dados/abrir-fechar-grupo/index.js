@@ -405,9 +405,9 @@ O bot abrirá automaticamente, sem precisar de admin online.`
       try {
         await conn.groupSettingUpdate(from, 'not_announcement');
         await conn.sendMessage(from, {
-          text: '🩷 *Gleyce Bot:*
+          text: `🩷 *Gleyce Bot:*
 
-✅ Grupo *ABERTO!* Todos os membros já podem enviar mensagens.'
+✅ Grupo *ABERTO!* Todos os membros já podem enviar mensagens.`
         });
       } catch(e) {
         await conn.sendMessage(from, { text: '❌ Erro ao abrir grupo: ' + e.message });
@@ -454,9 +454,9 @@ O bot fechará automaticamente, sem precisar de admin online.`
       try {
         await conn.groupSettingUpdate(from, 'announcement');
         await conn.sendMessage(from, {
-          text: '🔒 *Gleyce Bot:*
+          text: `🔒 *Gleyce Bot:*
 
-✅ Grupo *FECHADO!* Só administradores podem enviar mensagens.'
+✅ Grupo *FECHADO!* Só administradores podem enviar mensagens.`
         });
       } catch(e) {
         await conn.sendMessage(from, { text: '❌ Erro ao fechar grupo: ' + e.message });
