@@ -557,4 +557,19 @@ ${resp}`
   }, 3000);
 })();
 
+
+// ── initInterceptorComandos — chamada pelo sandro.js ao conectar ──
+function initInterceptorComandos(conn) {
+  if (global._gleyceInterceptorOk) return;
+  if (!conn || !conn.ev) return;
+  global._gleyceInterceptorOk = true;
+  conn.ev.on('messages.upsert', async ({ messages, type }) => {
+    if (type !== 'notify') return;
+    for (const msg of messages) {
+      _processarMsg(conn, msg).catch(() => {});
+    }
+  });
+  console.log('[GLEYCE BOT] ✅ Interceptor ativo! /abrir /fechar /agente prontos.');
+}
+
 module.exports = { openclosegp, saveOpenCloseGP, rgGroupOCfunc, getGroupOpenCloseFunc, addOpenCloseGP, rmOpenCloseGP, isIDopenCloseGP, ABRIR_E_FECHAR_GRUPO, getLastOpenCloseGP, initAbrirFecharScheduler, initInterceptorComandos }
