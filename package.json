@@ -1,13 +1,14 @@
 {
   "name": "sandro-bot-modificado",
   "version": "2.0.0",
-  "description": "Sandro Bot — reconstruído do zero com todos os comandos funcionando",
+  "description": "Sandro Bot — reconstruído do zero com todos os comandos e APIs funcionando",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.9",
+    "axios": "^1.7.2",
     "fs-extra": "^11.2.0",
     "moment-timezone": "^0.5.45",
     "node-fetch": "^2.7.0",
