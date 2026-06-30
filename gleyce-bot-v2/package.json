@@ -1,0 +1,20 @@
+{
+  "name": "gleyce-bot-v2",
+  "version": "1.0.0",
+  "description": "Gleyce Bot Oficial - reconstruído do zero com Baileys oficial",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "fs-extra": "^11.2.0",
+    "moment-timezone": "^0.5.45",
+    "node-fetch": "^2.7.0",
+    "pino": "^9.0.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
