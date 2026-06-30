@@ -2,6 +2,10 @@ const fs = require("fs")
 const moment = require('moment-timezone');
 const { getGroupAdmins } = require(`../../consts-func.js`)
 
+// ═══════════════════════════════════════════════════════════
+// UTILITÁRIOS
+// ═══════════════════════════════════════════════════════════
+
 function saveJSON(inter, caminho) {
   fs.writeFileSync(caminho, JSON.stringify(inter, null, 2));
 }
@@ -12,8 +16,8 @@ const isJsonIncludes = (json, value) => {
 }
 
 const contar = (frase, letraProcurada) => {
-  total = 0
-  for (i = 0; i < frase.length; i++) {
+  let total = 0
+  for (let i = 0; i < frase.length; i++) {
     if (letraProcurada == frase[i]) total += 1
   }
   return total
@@ -28,9 +32,9 @@ const contarMin = (base_a) => {
 const converterMin = (base_b) => {
   if (Number(base_b) === 0) return `00:00`
   if (!Number(base_b)) return `Precisa ser um número`
-  nmr = Number(base_b)
-  b = nmr % 60
-  a = (nmr - b) / 60
+  let nmr = Number(base_b)
+  let b = nmr % 60
+  let a = (nmr - b) / 60
   return `${a < 10 ? `0` + a : a}:${b < 10 ? `0` + b : b}`
 }
 
@@ -42,6 +46,10 @@ const sendHours = (formato) => {
 const sleep = async (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
+
+// ═══════════════════════════════════════════════════════════
+// BANCO DE DADOS — AGENDAMENTOS
+// ═══════════════════════════════════════════════════════════
 
 const ocgrouppath = `./dados/abrir-fechar-grupo/openclosegp.json`
 
@@ -59,8 +67,8 @@ function rgGroupOCfunc(from) {
 }
 
 const getGroupOpenCloseFunc = (from) => {
-  caixa = []
-  for (i of openclosegp) {
+  let caixa = []
+  for (let i of openclosegp) {
     if (from == i.groupId) caixa.push(i)
   }
   return caixa[0].horarios
@@ -68,52 +76,53 @@ const getGroupOpenCloseFunc = (from) => {
 
 function addOpenCloseGP(from, horario, adm, af = `open`) {
   if (horario.includes(`:`)) {
-    a = contarMin(horario)
-    b = a % 1440
-    day = (a - b) / 1440
-    hr = converterMin(b)
+    let a = contarMin(horario)
+    let b = a % 1440
+    let day = (a - b) / 1440
+    let hr = converterMin(b)
+    if (day == 0 && contarMin(hr) < contarMin(sendHours("HH:mm"))) day += 1
+    let grupo = getGroupOpenCloseFunc(from)
+    grupo.push({ id: sendHours("DDMMYYHHmmss"), func: af, hora: hr, dias: day, save: sendHours("DD"), cobrado: false, adm: adm })
+    saveOpenCloseGP()
   } else {
-    letra = String(horario).slice(horario.length - 1, horario.length).toLowerCase()
-    if (letra == `d`) mp = 60 * 24
-    else if (letra == `h`) mp = 60
-    else mp = 1
-    nmr = Number(String(horario).slice(0, horario.length - 1)) || 1
-    nmr *= mp
-    ha = contarMin(sendHours("HH:mm")) + nmr
-    parte = ha % 1440
-    day = (ha - parte) / 1440
-    hr = converterMin(parte)
+    let letra = String(horario).slice(horario.length - 1).toLowerCase()
+    let mp = letra == `d` ? 60 * 24 : letra == `h` ? 60 : 1
+    let nmr = (Number(String(horario).slice(0, horario.length - 1)) || 1) * mp
+    let ha = contarMin(sendHours("HH:mm")) + nmr
+    let parte = ha % 1440
+    let day = (ha - parte) / 1440
+    let hr = converterMin(parte)
+    if (day == 0 && contarMin(hr) < contarMin(sendHours("HH:mm"))) day += 1
+    let grupo = getGroupOpenCloseFunc(from)
+    grupo.push({ id: sendHours("DDMMYYHHmmss"), func: af, hora: hr, dias: day, save: sendHours("DD"), cobrado: false, adm: adm })
+    saveOpenCloseGP()
   }
-  if (day == 0 && contarMin(hr) < contarMin(sendHours("HH:mm"))) {
-    day += 1
-  }
-  grupo = getGroupOpenCloseFunc(from)
-  grupo.push({ id: sendHours("DDMMYYHHmmss"), func: af, hora: hr, dias: day, save: sendHours("DD"), cobrado: false, adm: adm })
-  saveOpenCloseGP()
 }
 
 const getLastOpenCloseGP = (from) => {
-  grupo = getGroupOpenCloseFunc(from)
+  let grupo = getGroupOpenCloseFunc(from)
   return grupo[grupo.length - 1]
 }
 
 const isIDopenCloseGP = (from, id) => {
-  grupo = getGroupOpenCloseFunc(from)
-  AB = grupo.map(i => i.id).indexOf(id)
+  let grupo = getGroupOpenCloseFunc(from)
+  let AB = grupo.map(i => i.id).indexOf(id)
   return AB >= 0 ? true : false
 }
 
 function rmOpenCloseGP(from, id) {
-  grupo = getGroupOpenCloseFunc(from)
-  AB = grupo.map(i => i.id).indexOf(id)
+  let grupo = getGroupOpenCloseFunc(from)
+  let AB = grupo.map(i => i.id).indexOf(id)
   grupo.splice(AB, 1)
   saveOpenCloseGP()
 }
 
-// ── Função auxiliar: verificar se a conexão está realmente ativa ──
-function _isConnReady() {
+// ═══════════════════════════════════════════════════════════
+// VERIFICAÇÃO DE CONEXÃO
+// ═══════════════════════════════════════════════════════════
+
+function _isConnReady(conn) {
   try {
-    const conn = global.conn;
     if (!conn || !conn.sendMessage) return false;
     if (conn.ws && conn.ws.readyState !== undefined && conn.ws.readyState !== 1) return false;
     return true;
@@ -122,57 +131,69 @@ function _isConnReady() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// SCHEDULER — ABRIR/FECHAR GRUPO AUTOMATICAMENTE
+// ═══════════════════════════════════════════════════════════
+
 async function ABRIR_E_FECHAR_GRUPO(blackmd) {
   try {
-    if (openclosegp.length > 0) {
-      for (abrir of openclosegp) {
-        if (abrir.horarios.length > 0) {
-          for (fechar of abrir.horarios) {
-            try {
-              if (fechar.dias > 0) {
-                if (Number(fechar.save) !== Number(sendHours("DD"))) {
-                  fechar.save = sendHours("DD")
-                  fechar.dias -= 1
-                  saveOpenCloseGP()
-                }
-              } else {
-                if (contarMin(sendHours("HH:mm")) >= contarMin(fechar.hora) && !fechar.cobrado) {
-                  fechar.cobrado = true
-                  saveOpenCloseGP()
+    if (openclosegp.length === 0) return;
+    for (let abrir of openclosegp) {
+      if (!abrir.horarios || abrir.horarios.length === 0) continue;
+      for (let fechar of abrir.horarios) {
+        try {
+          if (fechar.dias > 0) {
+            if (Number(fechar.save) !== Number(sendHours("DD"))) {
+              fechar.save = sendHours("DD")
+              fechar.dias -= 1
+              saveOpenCloseGP()
+            }
+          } else {
+            if (contarMin(sendHours("HH:mm")) >= contarMin(fechar.hora) && !fechar.cobrado) {
+              fechar.cobrado = true
+              saveOpenCloseGP()
 
-                  // ═══ VERIFICAR CONEXÃO ANTES DE AGIR ═══
-                  if (!_isConnReady()) {
-                    console.log("[ABRIR/FECHAR] Conexão indisponível, abortando operação...")
-                    return
-                  }
-
-                  grupo = abrir.groupId
-                  let data;
-                  try {
-                    data = await blackmd.groupMetadata(grupo)
-                  } catch (e) {
-                    console.error(`[ABRIR/FECHAR] Erro ao obter metadados do grupo ${grupo}:`, e.message)
-                    data = { subject: "indefinido" }
-                  }
-                  AB = openclosegp.map(ab => ab.groupId).indexOf(grupo)
-                  BC = openclosegp[AB].horarios.map(bc => bc.id).indexOf(fechar.id)
-                  if (fechar.func == `close`) {
-                    try { await blackmd.groupSettingUpdate(grupo, `announcement`) } catch (e) { console.error(`[ABRIR/FECHAR] Erro ao fechar grupo ${grupo}:`, e.message) }
-                    await sleep(2500)
-                    try { await blackmd.sendMessage(grupo, { text: `[❗] *O grupo ${data.subject || `"indefinido"`} foi fechado pelo ADM @${fechar.adm.split("@")[0]} em horário programado com sucesso* ❌`, mentions: [fechar.adm] }) } catch (e) { console.error(`[ABRIR/FECHAR] Erro ao enviar msg:`, e.message) }
-                    if (AB >= 0 && BC >= 0) { openclosegp[AB].horarios.splice(BC, 1); saveOpenCloseGP() }
-                  } else {
-                    try { await blackmd.groupSettingUpdate(grupo, `not_announcement`) } catch (e) { console.error(`[ABRIR/FECHAR] Erro ao abrir grupo ${grupo}:`, e.message) }
-                    await sleep(2500)
-                    try { await blackmd.sendMessage(grupo, { text: `[❕] *O grupo ${data.subject || `"indefinido"`} foi aberto pelo ADM @${fechar.adm.split("@")[0]} em horário programado com sucesso* ✔`, mentions: [fechar.adm] }) } catch (e) { console.error(`[ABRIR/FECHAR] Erro ao enviar msg:`, e.message) }
-                    if (AB >= 0 && BC >= 0) { openclosegp[AB].horarios.splice(BC, 1); saveOpenCloseGP() }
-                  }
-                }
+              if (!_isConnReady(blackmd)) {
+                console.log("[ABRIR/FECHAR] Conexão indisponível, abortando...")
+                return
               }
-            } catch (itemErr) {
-              console.error(`[ABRIR/FECHAR] Erro ao processar horário:`, itemErr.message)
+
+              let grupo = abrir.groupId
+              let data;
+              try {
+                data = await blackmd.groupMetadata(grupo)
+              } catch (e) {
+                data = { subject: "indefinido" }
+              }
+
+              let AB = openclosegp.map(ab => ab.groupId).indexOf(grupo)
+              let BC = openclosegp[AB].horarios.map(bc => bc.id).indexOf(fechar.id)
+
+              if (fechar.func == `close`) {
+                try { await blackmd.groupSettingUpdate(grupo, `announcement`) } catch (e) {}
+                await sleep(2000)
+                try {
+                  await blackmd.sendMessage(grupo, {
+                    text: `🔒 *O grupo ${data.subject || "indefinido"} foi FECHADO automaticamente pelo agendamento!*\n\nAgendado por @${fechar.adm.split("@")[0]}`,
+                    mentions: [fechar.adm]
+                  })
+                } catch (e) {}
+                if (AB >= 0 && BC >= 0) { openclosegp[AB].horarios.splice(BC, 1); saveOpenCloseGP() }
+              } else {
+                try { await blackmd.groupSettingUpdate(grupo, `not_announcement`) } catch (e) {}
+                await sleep(2000)
+                try {
+                  await blackmd.sendMessage(grupo, {
+                    text: `🩷 *O grupo ${data.subject || "indefinido"} foi ABERTO automaticamente pelo agendamento!*\n\nAgendado por @${fechar.adm.split("@")[0]}`,
+                    mentions: [fechar.adm]
+                  })
+                } catch (e) {}
+                if (AB >= 0 && BC >= 0) { openclosegp[AB].horarios.splice(BC, 1); saveOpenCloseGP() }
+              }
             }
           }
+        } catch (itemErr) {
+          console.error(`[ABRIR/FECHAR] Erro ao processar horário:`, itemErr.message)
         }
       }
     }
@@ -181,57 +202,126 @@ async function ABRIR_E_FECHAR_GRUPO(blackmd) {
   }
 }
 
-// ── Scheduler independente (usa global.conn dinâmico) ──
 function initAbrirFecharScheduler() {
-  console.log("[ABRIR/FECHAR] Scheduler independente iniciado ✅")
-
+  console.log("[ABRIR/FECHAR] Scheduler iniciado ✅")
   setInterval(() => {
     try {
-      if (!_isConnReady()) return
-      ABRIR_E_FECHAR_GRUPO(global.conn).catch(e => console.error("[ABRIR/FECHAR] Erro no scheduler:", e.message))
+      const conn = _getActiveConn()
+      if (!_isConnReady(conn)) return
+      ABRIR_E_FECHAR_GRUPO(conn).catch(e => console.error("[ABRIR/FECHAR] Erro no scheduler:", e.message))
     } catch (e) {
       console.error("[ABRIR/FECHAR] Erro no setInterval:", e.message)
     }
   }, 30000)
-
-  // Primeira verificação após 5s
   setTimeout(() => {
     try {
-      if (!_isConnReady()) return
-      ABRIR_E_FECHAR_GRUPO(global.conn).catch(e => console.error("[ABRIR/FECHAR] Erro na primeira verificação:", e.message))
-    } catch (e) {
-      console.error("[ABRIR/FECHAR] Erro no setTimeout:", e.message)
-    }
-  }, 5000)
+      const conn = _getActiveConn()
+      if (!_isConnReady(conn)) return
+      ABRIR_E_FECHAR_GRUPO(conn).catch(e => console.error("[ABRIR/FECHAR] Erro inicial:", e.message))
+    } catch (e) {}
+  }, 8000)
 }
 
+// ═══════════════════════════════════════════════════════════
+// LOCALIZAR CONEXÃO DO WHATSAPP — MULTI-ESTRATÉGIA
+// O sandro.js ofuscado pode usar qualquer nome de variável global.
+// Fazemos um scan em todos os globals para encontrar o socket do Baileys.
+// ═══════════════════════════════════════════════════════════
 
+function _getActiveConn() {
+  // 1. Verificar global.conn (padrão)
+  if (_isConnReady(global.conn)) return global.conn;
 
-// ═══════════════════════════════════════════════════════
-// === COMANDOS EXTRAS + ANTI-NUDEZ — Gleyce Bot Oficial ===
-// ═══════════════════════════════════════════════════════
+  // 2. Verificar referência capturada anteriormente
+  if (_isConnReady(global._gleyceConnRef)) return global._gleyceConnRef;
 
-const _fetch = require('node-fetch');
+  // 3. Escanear TODOS os globals para achar o socket do Baileys
+  try {
+    for (const key of Object.keys(global)) {
+      try {
+        const val = global[key];
+        if (
+          val && typeof val === 'object' &&
+          typeof val.sendMessage === 'function' &&
+          val.ev && typeof val.ev.on === 'function' &&
+          typeof val.groupSettingUpdate === 'function'
+        ) {
+          global._gleyceConnRef = val;
+          return val;
+        }
+      } catch (e) {}
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CAPTURA DO SOCKET VIA PATCH DO BAILEYS (makeWASocket)
+// ═══════════════════════════════════════════════════════════
+
+;(function _patchBaileys() {
+  try {
+    const baileys = require('@whiskeysockets/baileys');
+    if (baileys && baileys.makeWASocket && !baileys._gleycePatched) {
+      const _orig = baileys.makeWASocket;
+      baileys.makeWASocket = function(...args) {
+        const sock = _orig.apply(this, args);
+        if (sock) {
+          setTimeout(() => {
+            if (sock.sendMessage && sock.ev) {
+              global._gleyceConnRef = sock;
+              console.log('[GLEYCE BOT] ✅ Socket capturado via makeWASocket patch!');
+              _tryRegistrar(sock);
+            }
+          }, 500);
+        }
+        return sock;
+      };
+      baileys._gleycePatched = true;
+      console.log('[GLEYCE BOT] ✅ Baileys patcheado com sucesso!');
+    }
+  } catch (e) {
+    // Baileys pode ter nome diferente — sem problema, o scan vai encontrar
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════
+// FUNCIONALIDADES EXTRAS — ANTI-NUDEZ / AGENTE IA
+// ═══════════════════════════════════════════════════════════
+
+const _fetch = (() => {
+  try { return require('node-fetch'); } catch(e) { return null; }
+})();
+
 const { downloadMediaMessage } = (() => {
   try { return require('@whiskeysockets/baileys'); } catch(e) { return { downloadMediaMessage: null }; }
 })();
 
-// Prefixos aceitos
 const _PREFIXOS = ['!', '/', '.', '#', '-'];
 
 function _getTexto(msg) {
   const m = msg?.message;
   if (!m) return '';
-  return m.conversation || m.extendedTextMessage?.text || m.imageMessage?.caption || m.videoMessage?.caption || '';
+  return (
+    m.conversation ||
+    m.extendedTextMessage?.text ||
+    m.imageMessage?.caption ||
+    m.videoMessage?.caption ||
+    m.buttonsResponseMessage?.selectedDisplayText ||
+    ''
+  );
 }
 
 function _getPrefix(texto) {
-  for (const p of _PREFIXOS) { if (texto && texto.startsWith(p)) return p; }
+  for (const p of _PREFIXOS) {
+    if (texto && texto.startsWith(p)) return p;
+  }
   return null;
 }
 
-// ── Detector de nudez via DeepAI (chave pública de teste) ──
 async function _checkNudez(buffer) {
+  if (!_fetch) return false;
   try {
     const FormData = require('form-data');
     const form = new FormData();
@@ -243,71 +333,90 @@ async function _checkNudez(buffer) {
       timeout: 10000
     });
     const data = await res.json();
-    const score = data?.output?.nsfw_score ?? 0;
-    return Number(score) > 0.65;
+    return Number(data?.output?.nsfw_score ?? 0) > 0.65;
   } catch (e) {
     return false;
   }
 }
 
-// ── Agente IA via Pollinations (gratuito, sem chave) ──
 async function _chamarAgente(pergunta) {
-  try {
-    const url = 'https://text.pollinations.ai/' + encodeURIComponent(pergunta);
-    const res = await _fetch(url, {
-      headers: { 'User-Agent': 'GleyceBot/1.0' },
-      timeout: 20000
-    });
-    const texto = await res.text();
-    return (texto || '').trim().slice(0, 1500) || 'Sem resposta disponível.';
-  } catch (e) {
-    throw new Error('Serviço de IA indisponível: ' + e.message);
-  }
+  if (!_fetch) throw new Error('node-fetch não disponível');
+  const url = 'https://text.pollinations.ai/' + encodeURIComponent(pergunta);
+  const res = await _fetch(url, {
+    headers: { 'User-Agent': 'GleyceBot/1.0' },
+    timeout: 20000
+  });
+  const texto = await res.text();
+  return (texto || '').trim().slice(0, 1500) || 'Sem resposta disponível.';
 }
 
-// ── Baixar mídia compatível com Baileys v6/v7 ──
 async function _baixarMidia(conn, msg) {
   if (downloadMediaMessage) {
-    const buf = await downloadMediaMessage(msg, 'buffer', {}, { logger: { info(){}, debug(){}, error(){}, warn(){} }, reuploadRequest: conn.updateMediaMessage });
-    return buf;
+    try {
+      return await downloadMediaMessage(msg, 'buffer', {}, {
+        logger: { info(){}, debug(){}, error(){}, warn(){} },
+        reuploadRequest: conn.updateMediaMessage
+      });
+    } catch(e) {}
   }
-  // fallback legado
   if (typeof conn.downloadMediaMessage === 'function') {
-    const stream = await conn.downloadMediaMessage(msg);
-    const chunks = [];
-    for await (const c of stream) chunks.push(c);
-    return Buffer.concat(chunks);
+    try {
+      const stream = await conn.downloadMediaMessage(msg);
+      const chunks = [];
+      for await (const c of stream) chunks.push(c);
+      return Buffer.concat(chunks);
+    } catch(e) {}
   }
   return null;
 }
 
-// ── Mapa de comandos customizados recentes (suprimir erro do sandro.js) ──
+// ═══════════════════════════════════════════════════════════
+// CONTROLE DE COMANDOS CUSTOMIZADOS
+// Armazena o timestamp do último comando customizado por chat
+// para suprimir a mensagem de "comando não encontrado" do sandro.js
+// ═══════════════════════════════════════════════════════════
+
 const _recentCustomCmds = {};
 
-// ── Processador principal de mensagens ──
+// ═══════════════════════════════════════════════════════════
+// PROCESSADOR PRINCIPAL DE MENSAGENS
+// ═══════════════════════════════════════════════════════════
+
 async function _processarMsg(conn, msg) {
   if (!msg?.message) return;
 
   const from = msg.key.remoteJid;
 
-  // ══ SUPRIMIR "comando não encontrado" do sandro.js ══
-  // Quando o bot manda a mensagem de erro logo após um cmd customizado, deletamos
+  // ══ INTERCEPTAR MENSAGENS DO PRÓPRIO BOT ══
+  // Remove a imagem/mensagem de erro antiga do sandro.js
   if (msg.key.fromMe) {
     try {
-      const txt = msg.message?.conversation
-                || msg.message?.extendedTextMessage?.text
-                || msg.message?.imageMessage?.caption
-                || msg.message?.videoMessage?.caption
-                || '';
-      const ehErro = txt.includes('não foi encontrado')
-                  || txt.includes('nao foi encontrado')
-                  || (txt.includes('Utilize') && txt.includes('menu'));
+      const txt = _getTexto(msg);
+      const temImagem = !!(msg.message?.imageMessage);
+      const ehErro = (
+        txt.includes('não foi encontrado') ||
+        txt.includes('nao foi encontrado') ||
+        txt.includes('não encontrado') ||
+        (txt.includes('Utilize') && txt.includes('menu'))
+      );
+
+      // Suprimir mensagem de erro se veio logo após um comando customizado
       const recente = _recentCustomCmds[from];
-      if (ehErro && recente && (Date.now() - recente) < 6000) {
+      const dentroDoTempo = recente && (Date.now() - recente) < 8000;
+
+      if (ehErro && dentroDoTempo) {
         await conn.sendMessage(from, { delete: msg.key }).catch(() => {});
         delete _recentCustomCmds[from];
+        return;
       }
-    } catch(e) {}
+
+      // Suprimir QUALQUER mensagem de erro com imagem (foto antiga do menu)
+      // mesmo sem comando customizado recente
+      if (temImagem && ehErro) {
+        await conn.sendMessage(from, { delete: msg.key }).catch(() => {});
+        return;
+      }
+    } catch (e) {}
     return;
   }
 
@@ -329,7 +438,7 @@ async function _processarMsg(conn, msg) {
           mentions: [sender]
         });
       }
-    } catch(e) {}
+    } catch (e) {}
     return;
   }
 
@@ -344,11 +453,11 @@ async function _processarMsg(conn, msg) {
           mentions: [sender]
         });
       }
-    } catch(e) {}
+    } catch (e) {}
     return;
   }
 
-  // ══ COMANDOS VIA TEXTO ══
+  // ══ PROCESSAR COMANDOS DE TEXTO ══
   const texto  = _getTexto(msg);
   const prefix = _getPrefix(texto);
   if (!prefix) return;
@@ -364,11 +473,11 @@ async function _processarMsg(conn, msg) {
       const meta   = await conn.groupMetadata(from);
       const admins = meta.participants.filter(p => p.admin).map(p => p.id);
       isAdmin = admins.includes(sender);
-    } catch(e) {}
+    } catch (e) {}
   }
 
-  // ── ABRIR GRUPO (imediato ou agendado) ──
-  if (['abrir', 'abrirgrupo', 'opengroup', 'abrirg'].includes(cmd)) {
+  // ── ABRIR GRUPO ──
+  if (['abrir', 'abrirgrupo', 'opengroup', 'abrirg', 'open'].includes(cmd)) {
     _recentCustomCmds[from] = Date.now();
     if (!isGroup) {
       await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' });
@@ -383,41 +492,36 @@ async function _processarMsg(conn, msg) {
       try {
         rgGroupOCfunc(from);
         addOpenCloseGP(from, horario, sender, 'open');
-        const horaTexto = horario.includes(':') ? horario : `em ${horario}`;
+        const horaTexto = horario.includes(':') ? `às ${horario}` : `em ${horario}`;
         await conn.sendMessage(from, {
-          text: `🩷 *Gleyce Bot — Agendamento:*
-
-✅ Grupo será *ABERTO* ${horaTexto}!
-
-O bot abrirá automaticamente, sem precisar de admin online.`
+          text: `🩷 *Gleyce Bot — Agendamento criado!*\n\n` +
+                `✅ Grupo será *ABERTO* ${horaTexto}\n\n` +
+                `O bot abrirá automaticamente, sem precisar de admin online. 🤖`
         });
-      } catch(e) {
+      } catch (e) {
         await conn.sendMessage(from, {
-          text: `❌ Erro: ${e.message}
-
-*Formatos aceitos:*
-• ${prefix}abrir 22:00 — às 22h
-• ${prefix}abrir 2h — em 2 horas
-• ${prefix}abrir 30m — em 30 minutos`
+          text: `❌ Erro ao agendar: ${e.message}\n\n` +
+                `*Formatos aceitos:*\n` +
+                `• ${prefix}abrir 22:00 — às 22h exato\n` +
+                `• ${prefix}abrir 2h — em 2 horas\n` +
+                `• ${prefix}abrir 30m — em 30 minutos`
         });
       }
     } else {
       try {
         await conn.groupSettingUpdate(from, 'not_announcement');
         await conn.sendMessage(from, {
-          text: `🩷 *Gleyce Bot:*
-
-✅ Grupo *ABERTO!* Todos os membros já podem enviar mensagens.`
+          text: `🩷 *Gleyce Bot:*\n\n✅ Grupo *ABERTO!* Todos os membros já podem enviar mensagens.`
         });
-      } catch(e) {
+      } catch (e) {
         await conn.sendMessage(from, { text: '❌ Erro ao abrir grupo: ' + e.message });
       }
     }
     return;
   }
 
-  // ── FECHAR GRUPO (imediato ou agendado) ──
-  if (['fechar', 'fechargrupo', 'closegroup', 'fecharg'].includes(cmd)) {
+  // ── FECHAR GRUPO ──
+  if (['fechar', 'fechargrupo', 'closegroup', 'fecharg', 'close'].includes(cmd)) {
     _recentCustomCmds[from] = Date.now();
     if (!isGroup) {
       await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' });
@@ -432,51 +536,103 @@ O bot abrirá automaticamente, sem precisar de admin online.`
       try {
         rgGroupOCfunc(from);
         addOpenCloseGP(from, horario, sender, 'close');
-        const horaTexto = horario.includes(':') ? horario : `em ${horario}`;
+        const horaTexto = horario.includes(':') ? `às ${horario}` : `em ${horario}`;
         await conn.sendMessage(from, {
-          text: `🔒 *Gleyce Bot — Agendamento:*
-
-✅ Grupo será *FECHADO* ${horaTexto}!
-
-O bot fechará automaticamente, sem precisar de admin online.`
+          text: `🔒 *Gleyce Bot — Agendamento criado!*\n\n` +
+                `✅ Grupo será *FECHADO* ${horaTexto}\n\n` +
+                `O bot fechará automaticamente, sem precisar de admin online. 🤖`
         });
-      } catch(e) {
+      } catch (e) {
         await conn.sendMessage(from, {
-          text: `❌ Erro: ${e.message}
-
-*Formatos aceitos:*
-• ${prefix}fechar 22:00 — às 22h
-• ${prefix}fechar 2h — em 2 horas
-• ${prefix}fechar 30m — em 30 minutos`
+          text: `❌ Erro ao agendar: ${e.message}\n\n` +
+                `*Formatos aceitos:*\n` +
+                `• ${prefix}fechar 22:00 — às 22h exato\n` +
+                `• ${prefix}fechar 2h — em 2 horas\n` +
+                `• ${prefix}fechar 30m — em 30 minutos`
         });
       }
     } else {
       try {
         await conn.groupSettingUpdate(from, 'announcement');
         await conn.sendMessage(from, {
-          text: `🔒 *Gleyce Bot:*
-
-✅ Grupo *FECHADO!* Só administradores podem enviar mensagens.`
+          text: `🔒 *Gleyce Bot:*\n\n✅ Grupo *FECHADO!* Só administradores podem enviar mensagens.`
         });
-      } catch(e) {
+      } catch (e) {
         await conn.sendMessage(from, { text: '❌ Erro ao fechar grupo: ' + e.message });
       }
     }
     return;
   }
 
+  // ── VER AGENDAMENTOS ──
+  if (['agendamentos', 'listarag', 'horarios', 'listar-horarios'].includes(cmd)) {
+    _recentCustomCmds[from] = Date.now();
+    if (!isGroup) {
+      await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' });
+      return;
+    }
+    try {
+      rgGroupOCfunc(from);
+      const lista = getGroupOpenCloseFunc(from);
+      if (!lista || lista.length === 0) {
+        await conn.sendMessage(from, {
+          text: `📋 *Agendamentos deste grupo:*\n\nNenhum agendamento ativo no momento.\n\n` +
+                `Use:\n• ${prefix}abrir HH:MM ou ${prefix}abrir 2h\n• ${prefix}fechar HH:MM ou ${prefix}fechar 30m`
+        });
+      } else {
+        let txt = `📋 *Agendamentos deste grupo:*\n\n`;
+        lista.forEach((ag, i) => {
+          const tipo = ag.func === 'open' ? '🔓 ABRIR' : '🔒 FECHAR';
+          txt += `${i + 1}. ${tipo} às *${ag.hora}* (em ${ag.dias} dia(s))\n   ID: \`${ag.id}\`\n\n`;
+        });
+        txt += `Para cancelar: ${prefix}cancelarag <ID>`;
+        await conn.sendMessage(from, { text: txt });
+      }
+    } catch (e) {
+      await conn.sendMessage(from, { text: '❌ Erro: ' + e.message });
+    }
+    return;
+  }
+
+  // ── CANCELAR AGENDAMENTO ──
+  if (['cancelarag', 'removerag', 'deletarag', 'cancerag'].includes(cmd)) {
+    _recentCustomCmds[from] = Date.now();
+    if (!isGroup) {
+      await conn.sendMessage(from, { text: '❌ Este comando só funciona em grupos!' });
+      return;
+    }
+    if (!isAdmin) {
+      await conn.sendMessage(from, { text: '❌ Apenas administradores podem cancelar agendamentos!' });
+      return;
+    }
+    const id = args[0] || '';
+    if (!id) {
+      await conn.sendMessage(from, { text: `❌ Informe o ID do agendamento.\n\nUse: ${prefix}agendamentos para ver os IDs` });
+      return;
+    }
+    try {
+      rgGroupOCfunc(from);
+      if (!isIDopenCloseGP(from, id)) {
+        await conn.sendMessage(from, { text: `❌ Agendamento com ID \`${id}\` não encontrado!` });
+        return;
+      }
+      rmOpenCloseGP(from, id);
+      await conn.sendMessage(from, { text: `✅ Agendamento \`${id}\` cancelado com sucesso!` });
+    } catch (e) {
+      await conn.sendMessage(from, { text: '❌ Erro: ' + e.message });
+    }
+    return;
+  }
+
   // ── AGENTE IA ──
-  if (['agente', 'ia', 'gpt', 'ask', 'perguntar'].includes(cmd)) {
+  if (['agente', 'ia', 'gpt', 'ask', 'perguntar', 'agenteia'].includes(cmd)) {
     _recentCustomCmds[from] = Date.now();
     const pergunta = args.join(' ').trim();
     if (!pergunta) {
       await conn.sendMessage(from, {
-        text: `🧚‍♀️ *Agente IA — Gleyce Bot*
-
-Use: ${prefix}agente <sua pergunta>
-
-Exemplo:
-${prefix}agente O que é inteligência artificial?`
+        text: `🧚‍♀️ *Agente IA — Gleyce Bot*\n\n` +
+              `Use: ${prefix}agente <sua pergunta>\n\n` +
+              `Exemplo:\n${prefix}agente O que é inteligência artificial?`
       });
       return;
     }
@@ -484,92 +640,121 @@ ${prefix}agente O que é inteligência artificial?`
     try {
       const resp = await _chamarAgente(pergunta);
       await conn.sendMessage(from, {
-        text: `🧚‍♀️ *Agente IA — Gleyce Bot*
-
-${resp}`
+        text: `🧚‍♀️ *Agente IA — Gleyce Bot*\n\n${resp}`
       });
-    } catch(e) {
+    } catch (e) {
       await conn.sendMessage(from, { text: '❌ IA indisponível no momento: ' + e.message });
     }
     return;
   }
 }
 
-// ── Auto-iniciar interceptor ao carregar o módulo ──
-// sandro.js faz require() deste arquivo mas não chama initInterceptorComandos()
-// Por isso iniciamos sozinhos, com polling até global.conn estar pronto
-;(function _autoInit() {
-  function _registrar(conn) {
-    if (global._gleyceInterceptorOk) return;
-    global._gleyceInterceptorOk = true;
-    conn.ev.on('messages.upsert', async ({ messages, type }) => {
-      if (type !== 'notify') return;
-      for (const msg of messages) {
-        _processarMsg(conn, msg).catch(() => {});
-      }
-    });
-    console.log('[GLEYCE BOT] ✅ Interceptor ativo! Comandos /abrir /fechar /agente prontos.');
+// ═══════════════════════════════════════════════════════════
+// REGISTRO DO INTERCEPTOR NO SOCKET
+// ═══════════════════════════════════════════════════════════
+
+function _tryRegistrar(conn) {
+  if (!conn || !conn.ev) return false;
+
+  // Se já registrado nesta mesma instância, não registrar de novo
+  if (global._gleyceConnRef === conn && global._gleyceInterceptorOk) return true;
+
+  // Novo socket (reconexão) → resetar flag
+  if (global._gleyceConnRef !== conn) {
+    global._gleyceInterceptorOk = false;
   }
 
-  // Tentativa imediata após 3s
-  setTimeout(() => { if (global.conn?.ev) _registrar(global.conn); }, 3000);
+  if (global._gleyceInterceptorOk) return true;
 
-  // Polling a cada 5s por até 20 min
-  let _n = 0;
-  const _iv = setInterval(() => {
-    _n++;
-    if (global.conn?.ev) { _registrar(global.conn); clearInterval(_iv); }
-    if (_n > 240) clearInterval(_iv);
-  }, 5000);
-})();
-
-;(function _autoInit() {
-  let _tentativas = 0;
-  const _iv = setInterval(() => {
-    _tentativas++;
-    const conn = global.conn;
-    if (conn && conn.ev && !global._gleyceInterceptorOk) {
-      global._gleyceInterceptorOk = true;
-      clearInterval(_iv);
-      conn.ev.on('messages.upsert', async ({ messages, type }) => {
-        if (type !== 'notify') return;
-        for (const msg of messages) {
-          _processarMsg(conn, msg).catch(() => {});
-        }
-      });
-      console.log('[GLEYCE BOT] ✅ Interceptor de comandos extras ativo!');
-    }
-    if (_tentativas > 240) clearInterval(_iv); // desiste após 20min
-  }, 5000);
-  // Tentativa imediata após 3s
-  setTimeout(() => {
-    const conn = global.conn;
-    if (conn && conn.ev && !global._gleyceInterceptorOk) {
-      global._gleyceInterceptorOk = true;
-      conn.ev.on('messages.upsert', async ({ messages, type }) => {
-        if (type !== 'notify') return;
-        for (const msg of messages) {
-          _processarMsg(conn, msg).catch(() => {});
-        }
-      });
-      console.log('[GLEYCE BOT] ✅ Interceptor de comandos extras ativo!');
-    }
-  }, 3000);
-})();
-
-
-// ── initInterceptorComandos — chamada pelo sandro.js ao conectar ──
-function initInterceptorComandos(conn) {
-  if (global._gleyceInterceptorOk) return;
-  if (!conn || !conn.ev) return;
   global._gleyceInterceptorOk = true;
+  global._gleyceConnRef = conn;
+
   conn.ev.on('messages.upsert', async ({ messages, type }) => {
     if (type !== 'notify') return;
     for (const msg of messages) {
-      _processarMsg(conn, msg).catch(() => {});
+      // Usar sempre a conexão mais recente disponível
+      const activeConn = _getActiveConn() || conn;
+      _processarMsg(activeConn, msg).catch(() => {});
     }
   });
-  console.log('[GLEYCE BOT] ✅ Interceptor ativo! /abrir /fechar /agente prontos.');
+
+  // Detectar reconexão — quando o socket fecha, resetar o flag
+  if (conn.ev.on) {
+    conn.ev.on('connection.update', ({ connection }) => {
+      if (connection === 'close') {
+        // Na reconexão, o sandro.js criará um novo socket
+        // O polling vai detectar e re-registrar
+        global._gleyceInterceptorOk = false;
+        global._gleyceConnRef = null;
+      }
+    });
+  }
+
+  console.log('[GLEYCE BOT] ✅ Interceptor ativo! /abrir /fechar /agente /agendamentos prontos.');
+  return true;
 }
 
-module.exports = { openclosegp, saveOpenCloseGP, rgGroupOCfunc, getGroupOpenCloseFunc, addOpenCloseGP, rmOpenCloseGP, isIDopenCloseGP, ABRIR_E_FECHAR_GRUPO, getLastOpenCloseGP, initAbrirFecharScheduler, initInterceptorComandos }
+// ═══════════════════════════════════════════════════════════
+// AUTO-INIT — POLLING ÚNICO E ROBUSTO
+// Encontra a conexão independente do nome de variável usado
+// pelo sandro.js ofuscado
+// ═══════════════════════════════════════════════════════════
+
+;(function _autoInit() {
+  let _tentativas = 0;
+  const MAX = 300; // até 25 minutos (5s * 300)
+
+  function _tick() {
+    _tentativas++;
+
+    // 1. Verificar se o conn atual mudou (reconexão)
+    if (global._gleyceConnRef && !global._gleyceInterceptorOk) {
+      const conn = _getActiveConn();
+      if (conn) { _tryRegistrar(conn); return; }
+    }
+
+    // 2. Se já registrado, verificar se ainda válido
+    if (global._gleyceInterceptorOk && _isConnReady(global._gleyceConnRef)) return;
+
+    // 3. Tentar encontrar o conn
+    const conn = _getActiveConn();
+    if (conn) {
+      _tryRegistrar(conn);
+      return;
+    }
+
+    if (_tentativas >= MAX) {
+      console.log('[GLEYCE BOT] ⚠️ Não foi possível encontrar a conexão após 25min.');
+      clearInterval(_iv);
+    }
+  }
+
+  // Tentativa inicial após 3s (conexão pode ainda não existir)
+  setTimeout(_tick, 3000);
+  // Tentativa após 6s
+  setTimeout(_tick, 6000);
+  // Polling a cada 5s
+  const _iv = setInterval(_tick, 5000);
+})();
+
+// ═══════════════════════════════════════════════════════════
+// EXPORTS
+// ═══════════════════════════════════════════════════════════
+
+function initInterceptorComandos(conn) {
+  _tryRegistrar(conn);
+}
+
+module.exports = {
+  openclosegp,
+  saveOpenCloseGP,
+  rgGroupOCfunc,
+  getGroupOpenCloseFunc,
+  addOpenCloseGP,
+  rmOpenCloseGP,
+  isIDopenCloseGP,
+  ABRIR_E_FECHAR_GRUPO,
+  getLastOpenCloseGP,
+  initAbrirFecharScheduler,
+  initInterceptorComandos
+}
