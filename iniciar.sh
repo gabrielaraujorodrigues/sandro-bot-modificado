@@ -27,9 +27,9 @@ fi
 
 # Verificar sessão
 if [ -d "session" ] && [ "$(ls -A session 2>/dev/null)" ]; then
-  echo "💾 Sessão encontrada — reconectando sem QR code"
+  echo "💾 Sessão encontrada — reconectando automaticamente"
 else
-  echo "📱 Primeira vez — escaneie o QR code que vai aparecer"
+  echo "📲 Primeira vez — você receberá um código de 8 dígitos para inserir no WhatsApp"
 fi
 echo ""
 
