@@ -7,7 +7,6 @@ const pino = require('pino');
 const settings = require('./settings.json');
 
 const LINK_REGEX = /(chat\.whatsapp\.com\/|https?:\/\/)/i;
-
 const PALAVROES = ['porra','caralho','buceta','viado','puta','merda','desgraça','cuzão','fdp','safado','vagabunda','prostituta','piranha','bosta','vadia','cu ','seu cu','teu cu','filha da puta'];
 
 function getTexto(msg) {
@@ -54,7 +53,6 @@ function isOwner(userId) {
   return userId.split('@')[0].replace(/\D/g, '') === String(settings.numeroDono);
 }
 
-// NSFW detection using nsfwjs (optional — loads lazily)
 let nsfwModel = null;
 async function checkNSFW(buffer) {
   try {
@@ -71,34 +69,38 @@ async function checkNSFW(buffer) {
     tensor.dispose();
     const porn = predictions.find(p => p.className === 'Porn')?.probability || 0;
     const hentai = predictions.find(p => p.className === 'Hentai')?.probability || 0;
-    const sexy = predictions.find(p => p.className === 'Sexy')?.probability || 0;
-    return { isNSFW: (porn + hentai) > 0.6 || porn > 0.5, porn, hentai, sexy };
+    return { isNSFW: (porn + hentai) > 0.6 || porn > 0.5, porn, hentai };
   } catch {
-    // Fallback: try moderatecontent.com free API via buffer upload
-    try {
-      const fetch = require('node-fetch');
-      const FormData = require('form-data');
-      const form = new FormData();
-      form.append('image', buffer, { filename: 'img.jpg', contentType: 'image/jpeg' });
-      // Simple heuristic if API fails: allow
-      return { isNSFW: false, porn: 0, hentai: 0, sexy: 0 };
-    } catch {
-      return { isNSFW: false, porn: 0 };
-    }
+    return { isNSFW: false, porn: 0 };
   }
 }
 
 async function handleMessage(sock, msg) {
-  if (!msg.message || msg.key.fromMe) return;
+  if (!msg.message) return;
 
+  // Ignorar mensagens de status/broadcast
   const from = msg.key.remoteJid;
+  if (!from || from === 'status@broadcast') return;
+
   const isGroup = from.endsWith('@g.us');
-  const sender = msg.key.participant || msg.key.remoteJid;
+
+  // Sender: quando fromMe=true o remetente é o próprio dono
+  // Em grupos: msg.key.participant ou o próprio número do bot
+  let sender;
+  if (msg.key.fromMe) {
+    // Mensagem enviada pelo dono — pegar o número do bot conectado
+    sender = sock.user?.id || `${settings.numeroDono}@s.whatsapp.net`;
+    // Normalizar formato do número
+    if (!sender.includes('@')) sender = `${sender}@s.whatsapp.net`;
+  } else {
+    sender = msg.key.participant || msg.key.remoteJid;
+  }
+
   const tipo = getMsgType(msg);
   const texto = getTexto(msg);
 
   // ── ANTI-LINK ──
-  if (isGroup && texto && LINK_REGEX.test(texto)) {
+  if (isGroup && !msg.key.fromMe && texto && LINK_REGEX.test(texto)) {
     const cfg = readJSON('antilink', {});
     if (cfg[from]) {
       const souAdmin = isOwner(sender) || (await isAdmin(sock, from, sender));
@@ -113,14 +115,13 @@ async function handleMessage(sock, msg) {
   }
 
   // ── ANTI-PALAVRÃO ──
-  if (isGroup && texto) {
+  if (isGroup && !msg.key.fromMe && texto) {
     const cfg = readJSON('antipalavrao', {});
     if (cfg[from]) {
       const souAdmin = isOwner(sender) || (await isAdmin(sock, from, sender));
       if (!souAdmin) {
         const lower = texto.toLowerCase();
-        const encontrou = PALAVROES.some(p => lower.includes(p));
-        if (encontrou) {
+        if (PALAVROES.some(p => lower.includes(p))) {
           try {
             await sock.sendMessage(from, { delete: msg.key });
             await sock.sendMessage(from, { text: `🤬 *Antipalavrão:* @${sender.split('@')[0]}, palavrões não são permitidos!`, mentions: [sender] });
@@ -132,18 +133,10 @@ async function handleMessage(sock, msg) {
   }
 
   // ── ANTI-MÍDIA ──
-  if (isGroup && tipo && tipo !== 'text') {
+  if (isGroup && !msg.key.fromMe && tipo && tipo !== 'text') {
     const souAdmin = isOwner(sender) || (await isAdmin(sock, from, sender));
     if (!souAdmin) {
-      const antimidiaMap = {
-        image: 'antiimg',
-        video: 'antivideo',
-        audio: 'antiaudio',
-        sticker: 'antisticker',
-        location: 'antiloc',
-        contact: 'anticontato',
-        document: 'antidoc',
-      };
+      const antimidiaMap = { image:'antiimg', video:'antivideo', audio:'antiaudio', sticker:'antisticker', location:'antiloc', contact:'anticontato', document:'antidoc' };
       const chave = antimidiaMap[tipo];
       if (chave) {
         const cfg = readJSON(chave, {});
@@ -153,7 +146,6 @@ async function handleMessage(sock, msg) {
         }
       }
 
-      // ── ANTI-FIG18 (nudez em figurinha) ──
       if (tipo === 'sticker') {
         const cfg18 = readJSON('antifig18', {});
         if (cfg18[from]) {
@@ -188,7 +180,10 @@ async function handleMessage(sock, msg) {
 
   const comando = getComando(cmdNome);
   if (!comando) {
-    await sock.sendMessage(from, { text: `❌ Comando *${prefix}${cmdNome}* não encontrado.\nDigite *${prefix}menu* para ver os comandos.` });
+    // Só responde "não encontrado" para mensagens de outros (não polui o próprio chat)
+    if (!msg.key.fromMe) {
+      await sock.sendMessage(from, { text: `❌ Comando *${prefix}${cmdNome}* não encontrado.\nDigite *${prefix}menu* para ver os comandos.` });
+    }
     return;
   }
 

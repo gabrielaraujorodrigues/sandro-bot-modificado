@@ -1,39 +1,56 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ============================================================
-#  Sandro Bot — Script de inicialização com auto-reinício
-#  Mantém o bot rodando mesmo após erros ou quedas
+#  Sandro Bot — Script de inicialização
+#  Mantém o bot vivo com auto-reinício + wake-lock Android
 # ============================================================
 
-# Impede o Android de matar o processo (requer Termux:API)
-if command -v termux-wake-lock &>/dev/null; then
-  termux-wake-lock
-  echo "🔒 Wake lock ativado — Android não vai matar o processo"
-fi
-
-echo "🤖 Iniciando Sandro Bot..."
+echo ""
+echo "🤖 ====== SANDRO BOT ====== 🤖"
 echo "📁 Pasta: $(pwd)"
 echo "⏰ $(date)"
 echo ""
 
-TENTATIVAS=0
+# ── WAKE LOCK: impede o Android de matar o processo ──
+if command -v termux-wake-lock &>/dev/null; then
+  termux-wake-lock
+  echo "🔒 Wake lock ativado (Termux:API) — o bot não será morto pelo Android"
+else
+  echo "⚠️  termux-wake-lock não encontrado."
+  echo "   Para o bot não morrer em background, instale:"
+  echo "   pkg install termux-api"
+  echo ""
+fi
 
+# ── DICA DE SESSÃO ──
+if [ -d "session" ] && [ "$(ls -A session 2>/dev/null)" ]; then
+  echo "💾 Sessão encontrada — o bot vai reconectar SEM pedir QR code!"
+else
+  echo "📱 Primeira vez? Escaneie o QR code que vai aparecer."
+fi
+echo ""
+
+TENTATIVAS=0
 while true; do
   TENTATIVAS=$((TENTATIVAS + 1))
-  echo "▶️  Iniciando bot (tentativa #$TENTATIVAS) — $(date '+%H:%M:%S')"
-  
+  echo "▶️  Iniciando (tentativa #$TENTATIVAS) — $(date '+%H:%M:%S')"
+  echo "   Pressione Ctrl+C para parar."
+  echo ""
+
   node index.js
-  
   CODIGO=$?
-  
-  if [ $CODIGO -eq 0 ]; then
-    echo "✅ Bot encerrado normalmente. Pressione Enter para reiniciar ou Ctrl+C para sair."
-    read -r
+
+  echo ""
+  if [ $CODIGO -eq 1 ]; then
+    # Saída com código 1 = sessão deslogada pelo WhatsApp
+    echo "⚠️  Sessão encerrada pelo WhatsApp."
+    echo "🗑️  Apagando sessão antiga..."
+    rm -rf session
+    echo "🔄 Reiniciando em 3s para gerar novo QR code..."
+    sleep 3
   else
-    echo ""
-    echo "⚠️  Bot encerrou com código $CODIGO"
-    echo "🔄 Reiniciando em 5 segundos... (Ctrl+C para cancelar)"
+    echo "🔄 Bot encerrou (código $CODIGO). Reiniciando em 5s..."
+    echo "   (Ctrl+C para cancelar)"
     sleep 5
   fi
-  
-  echo "─────────────────────────────"
+  echo "─────────────────────────────────"
 done
