@@ -1,5 +1,49 @@
-const os = require('os');
-const path = require('path');
+// play.js — usa Invidious API (espelho público do YouTube)
+// Não depende de ytdl-core, ytsr ou yt-dlp — apenas node-fetch (já instalado)
+
+const INSTANCIAS = [
+  'https://invidious.io.lol',
+  'https://inv.nadeko.net',
+  'https://yt.cdaut.de',
+  'https://invidious.privacydev.net',
+  'https://invidious.nerdvpn.de',
+];
+
+async function apiGet(path) {
+  const fetch = require('node-fetch');
+  for (const base of INSTANCIAS) {
+    try {
+      const res = await fetch(`${base}${path}`, {
+        timeout: 12000,
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+      });
+      if (!res.ok) continue;
+      return await res.json();
+    } catch { continue; }
+  }
+  throw new Error('Todas as instâncias do Invidious falharam. Tente de novo em instantes.');
+}
+
+async function buscar(query) {
+  const data = await apiGet(
+    `/api/v1/search?q=${encodeURIComponent(query)}&type=video&fields=videoId,title,lengthSeconds&limit=8`
+  );
+  const video = data.find(v => v.lengthSeconds > 0 && v.lengthSeconds <= 600);
+  if (!video) throw new Error('Nenhum vídeo encontrado (ou todos muito longos). Tente outro nome.');
+  return video;
+}
+
+async function getAudioUrl(videoId) {
+  const data = await apiGet(
+    `/api/v1/videos/${videoId}?fields=adaptiveFormats,title,lengthSeconds`
+  );
+  // Preferir opus/webm ou mp4 audio
+  const fmt = (data.adaptiveFormats || [])
+    .filter(f => f.type && f.type.startsWith('audio/') && f.url)
+    .sort((a, b) => (parseInt(a.bitrate) || 0) - (parseInt(b.bitrate) || 0))[0];
+  if (!fmt) throw new Error('Nenhum formato de áudio disponível para este vídeo.');
+  return fmt.url;
+}
 
 module.exports = {
   name: 'play',
@@ -9,74 +53,45 @@ module.exports = {
     if (!args.length)
       return sock.sendMessage(from, { text: '❌ Informe o nome da música.\nEx: *!play Anitta Bang*' }, { quoted: msg });
 
-    let ytdl, ytsr;
-    try { ytdl = require('@distube/ytdl-core'); } catch {
-      return sock.sendMessage(from, { text: '⚠️ Módulo não instalado. Execute *npm install* na pasta do bot.' }, { quoted: msg });
-    }
-    try { ytsr = require('ytsr'); } catch {
-      return sock.sendMessage(from, { text: '⚠️ Módulo ytsr não instalado. Execute *npm install* na pasta do bot.' }, { quoted: msg });
-    }
-
+    const fetch = require('node-fetch');
     const busca = args.join(' ');
     await sock.sendMessage(from, { text: `🔍 Procurando *${busca}*...` }, { quoted: msg });
 
     try {
-      // Buscar no YouTube via ytsr
-      const resultado = await ytsr(busca, { limit: 5, safeSearch: false });
-      const video = resultado.items.find(
-        i => i.type === 'video' && !i.isLive && i.duration
-      );
-
-      if (!video) throw new Error('Nenhum vídeo encontrado para: ' + busca);
-
-      // Verificar duração (máx 10 min)
-      const partes = video.duration.split(':').map(Number);
-      const segundos = partes.length === 3
-        ? partes[0] * 3600 + partes[1] * 60 + partes[2]
-        : partes[0] * 60 + (partes[1] || 0);
-
-      if (segundos > 600)
-        return sock.sendMessage(from, {
-          text: `⏱️ Música muito longa (${video.duration}). Limite: 10 minutos.`
-        }, { quoted: msg });
+      const video = await buscar(busca);
+      const min = Math.floor(video.lengthSeconds / 60);
+      const seg = video.lengthSeconds % 60;
 
       await sock.sendMessage(from, {
-        text: `🎶 *${video.title}*\n⏱️ ${video.duration}\n⬇️ Baixando...`
+        text: `🎶 *${video.title}*\n⏱️ ${min}:${String(seg).padStart(2,'0')}\n⬇️ Baixando...`
       }, { quoted: msg });
 
-      // Baixar áudio via ytdl-core
-      const chunks = [];
-      await new Promise((resolve, reject) => {
-        const stream = ytdl(video.url, {
-          filter: 'audioonly',
-          quality: 'lowestaudio',
-          requestOptions: {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 Chrome/115.0 Mobile Safari/537.36',
-              'Accept-Language': 'pt-BR,pt;q=0.9',
-            },
-          },
-        });
-        stream.on('data', c => chunks.push(c));
-        stream.on('end', resolve);
-        stream.on('error', reject);
-      });
+      const audioUrl = await getAudioUrl(video.videoId);
 
-      const buffer = Buffer.concat(chunks);
+      const response = await fetch(audioUrl, {
+        timeout: 60000,
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+      });
+      if (!response.ok) throw new Error(`Erro ao baixar: HTTP ${response.status}`);
+
+      const buffer = await response.buffer();
+
+      // Detectar mimetype
+      const tipo = audioUrl.includes('webm') ? 'audio/ogg; codecs=opus' : 'audio/mp4';
 
       await sock.sendMessage(from, {
         audio: buffer,
-        mimetype: 'audio/mpeg',
+        mimetype: tipo,
         ptt: false,
       }, { quoted: msg });
 
       await sock.sendMessage(from, {
-        text: `✅ *${video.title}* (${video.duration})`
+        text: `✅ *${video.title}* (${min}:${String(seg).padStart(2,'0')})`
       }, { quoted: msg });
 
     } catch (e) {
       await sock.sendMessage(from, {
-        text: `❌ Não consegui baixar.\n${e.message.slice(0, 150)}\n\nTente com nome diferente.`
+        text: `❌ Não consegui baixar.\n${e.message.slice(0, 200)}\n\nTente novamente ou com nome diferente.`
       }, { quoted: msg });
     }
   },
