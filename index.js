@@ -1,3 +1,11 @@
+// Suprimir erros internos do libsignal (Bad MAC) — normais na 1ª reconexão
+const _origConsoleError = console.error.bind(console);
+console.error = (...args) => {
+  const msg = args.join(' ');
+  if (msg.includes('Bad MAC') || msg.includes('Failed to decrypt') || msg.includes('Session error') || msg.includes('Closing open session') || msg.includes('Closing session:') || msg.includes('_chains') || msg.includes('registrationId') || msg.includes('currentRatchet') || msg.includes('indexInfo') || msg.includes('pendingPreKey') || msg.includes('libsignal') || msg.includes('session_cipher') || msg.includes('SessionEntry')) return;
+  _origConsoleError(...args);
+};
+
 const { startConnection } = require('./lib/connection');
 const { carregarComandos, getComando } = require('./lib/commandHandler');
 const { iniciarScheduler } = require('./lib/scheduler');
