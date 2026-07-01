@@ -16,6 +16,7 @@ const _origErr = console.error.bind(console);
 console.log   = (...a) => { if (!_isNoise(...a)) _origLog(...a); };
 console.error = (...a) => { if (!_isNoise(...a)) _origErr(...a); };
 
+const { startConnection } = require('./lib/connection');
 const { carregarComandos, getComando } = require('./lib/commandHandler');
 const { iniciarScheduler } = require('./lib/scheduler');
 const { readJSON, writeJSON } = require('./lib/database');
