@@ -1,12 +1,21 @@
-// Suprimir erros internos do libsignal (Bad MAC) — normais na 1ª reconexão
-const _origConsoleError = console.error.bind(console);
-console.error = (...args) => {
-  const msg = args.join(' ');
-  if (msg.includes('Bad MAC') || msg.includes('Failed to decrypt') || msg.includes('Session error') || msg.includes('Closing open session') || msg.includes('Closing session:') || msg.includes('_chains') || msg.includes('registrationId') || msg.includes('currentRatchet') || msg.includes('indexInfo') || msg.includes('pendingPreKey') || msg.includes('libsignal') || msg.includes('session_cipher') || msg.includes('SessionEntry')) return;
-  _origConsoleError(...args);
+// Suprimir logs internos do libsignal (Bad MAC, Session errors) — normais na reconexão
+const _NOISE_PATTERNS = [
+  'Bad MAC','Failed to decrypt','Session error','Closing open session',
+  'Closing session:','SessionEntry','_chains','registrationId','currentRatchet',
+  'indexInfo','pendingPreKey','ephemeralKeyPair','lastRemoteEphemeralKey',
+  'previousCounter','rootKey','baseKey','baseKeyType','remoteIdentityKey',
+  '<Buffer','chainKey','chainType','messageKeys','libsignal','session_cipher',
+  'preKeyId','signedKeyId','closed: -1',
+];
+const _isNoise = (...args) => {
+  const s = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+  return _NOISE_PATTERNS.some(p => s.includes(p));
 };
+const _origLog = console.log.bind(console);
+const _origErr = console.error.bind(console);
+console.log   = (...a) => { if (!_isNoise(...a)) _origLog(...a); };
+console.error = (...a) => { if (!_isNoise(...a)) _origErr(...a); };
 
-const { startConnection } = require('./lib/connection');
 const { carregarComandos, getComando } = require('./lib/commandHandler');
 const { iniciarScheduler } = require('./lib/scheduler');
 const { readJSON, writeJSON } = require('./lib/database');
